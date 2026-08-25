@@ -31,7 +31,7 @@ app.use(
     allowedHeaders: ['Content-Type', 'x-admin-token'],
   }),
 )
-app.options('*', cors({
+app.options(/.*/, cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.has(origin)) {
       callback(null, true)
