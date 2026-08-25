@@ -84,7 +84,6 @@ function App() {
     setCompanyForm({
       name: company.name,
       logo: company.logo,
-      segment: company.segment,
       site: company.site,
       careers: company.careers,
       linkedin: company.linkedin,
@@ -116,7 +115,6 @@ function App() {
     const payload = {
       ...companyForm,
       name: companyForm.name.trim(),
-      segment: companyForm.segment.trim(),
       site: companyForm.site.trim(),
       careers: companyForm.careers.trim(),
       linkedin: companyForm.linkedin.trim(),

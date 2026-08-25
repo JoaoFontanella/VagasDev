@@ -17,7 +17,7 @@ function SitesPage({
           <input
             id="company-search"
             type="text"
-            placeholder="Nome ou segmento"
+            placeholder="Nome da empresa"
             value={companySearch}
             onChange={(event) => onCompanySearchChange(event.target.value)}
           />

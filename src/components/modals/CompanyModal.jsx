@@ -30,15 +30,6 @@ function CompanyModal({ isOpen, editingCompanyId, form, onChangeForm, onClose, o
           </label>
 
           <label>
-            Segmento
-            <input
-              type="text"
-              value={form.segment}
-              onChange={(event) => onChangeForm({ segment: event.target.value })}
-            />
-          </label>
-
-          <label>
             Site
             <input
               type="url"

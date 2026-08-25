@@ -11,7 +11,6 @@ function CompanyCard({ company, canManage, onEdit, onDelete }) {
         </div>
         <div>
           <h2>{company.name}</h2>
-          <p className="muted">{company.segment || 'Sem segmento informado'}</p>
         </div>
       </div>
 

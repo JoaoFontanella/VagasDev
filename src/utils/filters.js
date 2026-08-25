@@ -3,9 +3,8 @@ export const filterCompanies = (companies, query) => {
 
   return companies.filter((company) => {
     const name = company.name.toLowerCase()
-    const segment = company.segment.toLowerCase()
 
-    return name.includes(normalizedSearch) || segment.includes(normalizedSearch)
+    return name.includes(normalizedSearch)
   })
 }
 

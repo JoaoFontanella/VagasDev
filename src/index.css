@@ -1,16 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap');
 
 :root {
-  --bg: #0b1220;
-  --surface: #121b2d;
-  --surface-soft: #172238;
-  --line: #24344f;
-  --text: #e8edf7;
-  --text-soft: #9fb0c9;
-  --brand: #37a8b3;
-  --brand-soft: #1a3641;
-  --focus: #5fc4cd;
-  --danger: #ff8e8e;
+  --bg: #171717;
+  --surface: #232323;
+  --surface-soft: #2d2d2d;
+  --line: #484848;
+  --text: #f1f1f1;
+  --text-soft: #b5b5b5;
+  --brand: #d6d6d6;
+  --brand-soft: #3a3a3a;
+  --focus: #ededed;
+  --danger: #f0a0a0;
   --font-body: 'Manrope', 'Segoe UI', sans-serif;
   --font-title: 'Sora', 'Segoe UI', sans-serif;
 }
@@ -23,9 +23,9 @@ body {
   margin: 0;
   min-height: 100svh;
   background:
-    radial-gradient(circle at 6% 8%, #133349 0%, transparent 34%),
-    radial-gradient(circle at 100% 0%, #1f2f50 0%, transparent 28%),
-    var(--bg);
+    radial-gradient(ellipse at 12% -10%, rgba(255, 255, 255, 0.16) 0%, transparent 42%),
+    radial-gradient(ellipse at 88% 8%, rgba(160, 160, 160, 0.11) 0%, transparent 35%),
+    linear-gradient(135deg, #111111 0%, #202020 48%, #151515 100%);
   font-family: var(--font-body);
   color: var(--text);
   line-height: 1.45;
