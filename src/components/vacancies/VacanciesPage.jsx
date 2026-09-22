@@ -1,4 +1,4 @@
-import { levels, modalities } from '../../constants/options'
+import { areas, modalities } from '../../constants/options'
 import VacancyCard from './VacancyCard'
 
 function VacanciesPage({ filters, onChangeFilters, companyOptions, vacancies, isLoading }) {
@@ -38,23 +38,16 @@ function VacanciesPage({ filters, onChangeFilters, companyOptions, vacancies, is
           </select>
 
           <select
-            value={filters.level}
-            onChange={(event) => onChangeFilters({ level: event.target.value })}
+            value={filters.area}
+            onChange={(event) => onChangeFilters({ area: event.target.value })}
           >
-            <option value="">Nivel</option>
-            {levels.map((level) => (
-              <option key={level} value={level}>
-                {level}
+            <option value="">Área</option>
+            {areas.map((area) => (
+              <option key={area} value={area}>
+                {area}
               </option>
             ))}
           </select>
-
-          <input
-            type="text"
-            placeholder="Localizacao"
-            value={filters.location}
-            onChange={(event) => onChangeFilters({ location: event.target.value })}
-          />
 
           <select value={filters.sort} onChange={(event) => onChangeFilters({ sort: event.target.value })}>
             <option value="recent">Mais recentes</option>

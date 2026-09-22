@@ -2,7 +2,6 @@ import { levels, modalities } from './options'
 
 export const initialCompanyForm = {
   name: '',
-  logo: '',
   site: '',
   careers: '',
   linkedin: '',

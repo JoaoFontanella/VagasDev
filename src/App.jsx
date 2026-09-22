@@ -27,8 +27,7 @@ function App() {
     keyword: '',
     company: '',
     modality: '',
-    level: '',
-    location: '',
+    area: '',
     sort: 'recent',
   })
 
@@ -83,7 +82,6 @@ function App() {
     setEditingCompanyId(company.id)
     setCompanyForm({
       name: company.name,
-      logo: company.logo,
       site: company.site,
       careers: company.careers,
       linkedin: company.linkedin,

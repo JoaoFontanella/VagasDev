@@ -2,16 +2,7 @@ function CompanyCard({ company, canManage, onEdit, onDelete }) {
   return (
     <article className="card company-card">
       <div className="card-header">
-        <div className="logo-wrap" aria-hidden="true">
-          {company.logo ? (
-            <img src={company.logo} alt={`Logo da ${company.name}`} />
-          ) : (
-            <span>{company.name.slice(0, 1).toUpperCase()}</span>
-          )}
-        </div>
-        <div>
-          <h2>{company.name}</h2>
-        </div>
+        <h2>{company.name}</h2>
       </div>
 
       <div className="links-row">

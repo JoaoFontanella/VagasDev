@@ -20,16 +20,6 @@ function CompanyModal({ isOpen, editingCompanyId, form, onChangeForm, onClose, o
           </label>
 
           <label>
-            Logo
-            <input
-              type="url"
-              placeholder="https://"
-              value={form.logo}
-              onChange={(event) => onChangeForm({ logo: event.target.value })}
-            />
-          </label>
-
-          <label>
             Site
             <input
               type="url"

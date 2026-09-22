@@ -20,9 +20,44 @@ export const getCompanyFilterOptions = (companies, vacancies) => {
   return [...options].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 }
 
+const areaKeywords = {
+  Tecnologia: ['tecnologia', 'software', 'desenvolvedor', 'desenvolvimento', 'programador', 'sistema', 'dados', 'cloud', 'produto digital', 'qa', 'devops', 'frontend', 'backend'],
+  Marketing: ['marketing', 'comunicacao', 'publicidade', 'conteudo', 'social media', 'branding', 'seo'],
+  Vendas: ['vendas', 'comercial', 'business development', 'account executive', 'sales', 'representante'],
+  Administrativo: ['administrativo', 'administracao', 'secretaria', 'assistente', 'recepcionista', 'office'],
+  Financeiro: ['financeiro', 'financas', 'contabil', 'contabilidade', 'controladoria', 'fiscal', 'tesouraria'],
+  'Recursos Humanos': ['recursos humanos', 'rh', 'people', 'recrutamento', 'selecao', 'talentos', 'dp'],
+  Operacoes: ['operacoes', 'logistica', 'compras', 'suprimentos', 'estoque', 'atendimento', 'producao'],
+  Engenharia: ['engenharia', 'engenheiro', 'civil', 'mecanica', 'eletrica', 'processos'],
+}
+
+const normalizeText = (value) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+export const getVacancyArea = (vacancy) => {
+  if (vacancy.area) {
+    return vacancy.area
+  }
+
+  const text = normalizeText([
+    vacancy.title,
+    vacancy.description,
+    ...(Array.isArray(vacancy.tags) ? vacancy.tags : []),
+  ]
+    .filter(Boolean)
+    .join(' '))
+
+  return Object.entries(areaKeywords).find(([, keywords]) =>
+    keywords.some((keyword) => text.includes(keyword)),
+  )?.[0] || ''
+}
+
 export const filterVacancies = (vacancies, vacancyFilters) => {
   const normalizedKeyword = vacancyFilters.keyword.trim().toLowerCase()
-  const normalizedLocation = vacancyFilters.location.trim().toLowerCase()
+  const normalizedArea = vacancyFilters.area.trim().toLowerCase()
 
   const result = vacancies.filter((vacancy) => {
     const matchesKeyword =
@@ -38,17 +73,13 @@ export const filterVacancies = (vacancies, vacancyFilters) => {
     const matchesModality =
       !vacancyFilters.modality || vacancy.modality === vacancyFilters.modality
 
-    const matchesLevel = !vacancyFilters.level || vacancy.level === vacancyFilters.level
-
-    const matchesLocation =
-      !normalizedLocation || vacancy.location.toLowerCase().includes(normalizedLocation)
+    const matchesArea = !normalizedArea || normalizeText(getVacancyArea(vacancy)) === normalizedArea
 
     return (
       matchesKeyword &&
       matchesCompany &&
       matchesModality &&
-      matchesLevel &&
-      matchesLocation
+      matchesArea
     )
   })
 
