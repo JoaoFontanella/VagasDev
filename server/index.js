@@ -9,24 +9,33 @@ import { ingestGupyJobs } from './services/gupy-ingest.js'
 const app = express()
 const port = process.env.PORT || 8787
 const adminToken = process.env.ADMIN_TOKEN || ''
+
+const normalizeOrigin = (origin) => origin.trim().replace(/\/+$/, '')
+const configuredOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://vagasdev.vercel.app',
+  process.env.FRONTEND_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+  process.env.RENDER_EXTERNAL_URL,
+  ...((process.env.ALLOWED_ORIGINS || '').split(',')),
+]
+  .filter(Boolean)
+  .map(normalizeOrigin)
 const allowedOrigins = new Set(
-  [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://vagasdev.vercel.app',
-    process.env.FRONTEND_URL,
-    ...((process.env.ALLOWED_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean)),
-  ].filter(Boolean),
+  configuredOrigins,
 )
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.has(origin)) {
+      const normalizedOrigin = origin ? normalizeOrigin(origin) : ''
+      if (!origin || allowedOrigins.has(normalizedOrigin)) {
         callback(null, true)
         return
       }
 
+      console.error(`[cors] origem rejeitada: ${origin}`)
       callback(new Error('Origin not allowed by CORS'))
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -35,11 +44,13 @@ app.use(
 )
 app.options(/.*/, cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.has(origin)) {
+    const normalizedOrigin = origin ? normalizeOrigin(origin) : ''
+    if (!origin || allowedOrigins.has(normalizedOrigin)) {
       callback(null, true)
       return
     }
 
+    console.error(`[cors] origem rejeitada: ${origin}`)
     callback(new Error('Origin not allowed by CORS'))
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
