@@ -17,7 +17,11 @@ function App() {
   const canManage = import.meta.env.VITE_ENABLE_ADMIN === 'true'
   const adminToken = import.meta.env.VITE_ADMIN_TOKEN || ''
 
-  const [activePage, setActivePage] = useState('sites')
+  const [activePage, setActivePage] = useState('vacancies')
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = window.localStorage.getItem('vagasdev-theme')
+    return savedTheme === 'dark'
+  })
   const [companies, setCompanies] = useState([])
   const [vacancies, setVacancies] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -37,6 +41,11 @@ function App() {
   const [editingCompanyId, setEditingCompanyId] = useState(null)
   const [companyForm, setCompanyForm] = useState(initialCompanyForm)
   const [vacancyForm, setVacancyForm] = useState(createInitialVacancyForm)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDarkMode ? 'dark' : 'light'
+    window.localStorage.setItem('vagasdev-theme', isDarkMode ? 'dark' : 'light')
+  }, [isDarkMode])
 
   useEffect(() => {
     const loadData = async () => {
@@ -71,6 +80,15 @@ function App() {
     () => filterVacancies(vacancies, vacancyFilters),
     [vacancies, vacancyFilters],
   )
+
+  const activeCount = vacancies.length
+  const [now] = useState(() => Date.now())
+  const recentCount = useMemo(() => {
+    return vacancies.filter((vacancy) => {
+      const date = new Date(vacancy.date).getTime()
+      return Number.isFinite(date) && now - date <= 7 * 24 * 60 * 60 * 1000
+    }).length
+  }, [now, vacancies])
 
   const openAddCompanyModal = () => {
     setEditingCompanyId(null)
@@ -224,6 +242,8 @@ function App() {
       <AppHeader
         activePage={activePage}
         canManage={canManage}
+        isDarkMode={isDarkMode}
+        onToggleTheme={() => setIsDarkMode((current) => !current)}
         onChangePage={setActivePage}
         onOpenCreate={
           activePage === 'sites'
@@ -232,7 +252,30 @@ function App() {
         }
       />
 
-      <main className="content">
+      <main className="workspace">
+        <section className="workspace-head">
+          <div>
+            <p className="section-kicker">{activePage === 'sites' ? 'Radar de empresas' : 'Curadoria de oportunidades'}</p>
+            <h2>{activePage === 'sites' ? 'Onde a próxima oportunidade começa.' : 'Vagas que merecem sua atenção.'}</h2>
+            <p className="workspace-lede">
+              {activePage === 'sites'
+                ? 'Uma visão limpa das empresas que estão movimentando a cena tech da região.'
+                : 'Pesquise, compare e encontre seu próximo movimento profissional.'}
+            </p>
+          </div>
+          <div className="workspace-stats" aria-label="Resumo">
+            <div>
+              <strong>{activePage === 'sites' ? companies.length : activeCount}</strong>
+              <span>{activePage === 'sites' ? 'empresas mapeadas' : 'vagas abertas'}</span>
+            </div>
+            <div className="stat-accent">
+              <strong>{recentCount}</strong>
+              <span>publicadas em 7 dias</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="content">
         {activePage === 'sites' ? (
           <SitesPage
             companySearch={companySearch}
@@ -252,6 +295,7 @@ function App() {
             isLoading={isLoading}
           />
         )}
+        </section>
       </main>
 
       {canManage && (

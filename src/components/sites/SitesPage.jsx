@@ -13,7 +13,7 @@ function SitesPage({
     <>
       <section className="toolbar">
         <div className="toolbar-search">
-          <label htmlFor="company-search">Pesquisar empresas</label>
+          <label htmlFor="company-search">Explorar empresas</label>
           <input
             id="company-search"
             type="text"

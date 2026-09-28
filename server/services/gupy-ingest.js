@@ -1,4 +1,5 @@
 import db from '../db.js'
+import { getJobCutoffDate, getRetentionMonths } from './job-retention.js'
 
 const GUPY_URL = 'https://portal.gupy.io/api/job-search/jobs'
 const DEFAULT_USER_AGENT =
@@ -15,9 +16,10 @@ const getConfig = (overrides = {}) => ({
   city: overrides.city || process.env.GUPY_CITY || 'Criciúma',
   state: overrides.state || process.env.GUPY_STATE || 'Santa Catarina',
   limit: getNumberEnv('GUPY_PAGE_LIMIT', overrides.limit || 12, 1),
-  maxPages: getNumberEnv('GUPY_MAX_PAGES', overrides.maxPages || 10, 1),
+  maxPages: getNumberEnv('GUPY_MAX_PAGES', overrides.maxPages || 20, 1),
   expirationRuns: getNumberEnv('GUPY_EXPIRATION_RUNS', overrides.expirationRuns || 3, 1),
   retries: getNumberEnv('GUPY_RETRIES', overrides.retries || 3, 1),
+  retentionMonths: getRetentionMonths(overrides),
 })
 
 const buildUrl = ({ city, state, limit, offset }) => {
@@ -123,7 +125,7 @@ const parseJobs = (payload) => {
   })
 }
 
-const saveJobs = async (jobs, collectedAt, expirationRuns) => {
+const saveJobs = async (jobs, collectedAt, expirationRuns, cutoffDate) => {
   const rows = jobs.map((job) => ({
     id: `gupy-${job.external_id}`,
     ...job,
@@ -141,6 +143,20 @@ const saveJobs = async (jobs, collectedAt, expirationRuns) => {
     .upsert(rows, { onConflict: 'source,external_id' })
   if (upsertError) {
     throw new Error(`[gupy] falha ao salvar vagas: ${upsertError.message}`)
+  }
+
+  const { error: oldJobsError } = await db
+    .from('vacancies')
+    .update({
+      expired_at: collectedAt,
+      missing_runs: expirationRuns,
+    })
+    .eq('source', 'gupy')
+    .is('expired_at', null)
+    .lt('date', cutoffDate)
+
+  if (oldJobsError) {
+    throw new Error(`[gupy] falha ao expirar vagas fora do período: ${oldJobsError.message}`)
   }
 
   const { data: existingJobs, error: selectError } = await db
@@ -177,14 +193,29 @@ const saveJobs = async (jobs, collectedAt, expirationRuns) => {
 export const ingestGupyJobs = async (overrides = {}) => {
   const config = getConfig(overrides)
   const jobs = []
+  const seenIds = new Set()
   let offset = 0
+  let expectedTotal = null
 
   for (let page = 0; page < config.maxPages; page += 1) {
     const payload = await fetchPage(buildUrl({ ...config, offset }), config.retries, page === 0)
     const pageJobs = parseJobs(payload)
-    jobs.push(...pageJobs)
+    expectedTotal = Number.isFinite(payload.pagination?.total)
+      ? payload.pagination.total
+      : expectedTotal
 
-    if (pageJobs.length === 0 || pageJobs.length < config.limit) {
+    for (const job of pageJobs) {
+      if (!seenIds.has(job.external_id)) {
+        seenIds.add(job.external_id)
+        jobs.push(job)
+      }
+    }
+
+    if (
+      pageJobs.length === 0 ||
+      (expectedTotal !== null && offset + pageJobs.length >= expectedTotal) ||
+      pageJobs.length < config.limit
+    ) {
       break
     }
 
@@ -192,7 +223,23 @@ export const ingestGupyJobs = async (overrides = {}) => {
   }
 
   const collectedAt = new Date().toISOString()
-  await saveJobs(jobs, collectedAt, config.expirationRuns)
-  console.log(`[gupy] ingestão concluída: ${jobs.length} vagas salvas.`)
-  return { count: jobs.length, collectedAt }
+  const cutoffDate = getJobCutoffDate(config)
+  const jobsInRetentionWindow = jobs.filter((job) => job.date.slice(0, 10) >= cutoffDate)
+
+  if (jobs.length === 0) {
+    console.warn('[gupy] nenhuma vaga retornada; banco não será marcado como ausente.')
+    return { count: 0, collectedAt, cutoffDate, skipped: true }
+  }
+
+  await saveJobs(jobsInRetentionWindow, collectedAt, config.expirationRuns, cutoffDate)
+  console.log(
+    `[gupy] ingestão concluída: ${jobsInRetentionWindow.length} vagas salvas; ` +
+    `${jobs.length - jobsInRetentionWindow.length} fora da retenção (${cutoffDate}).`,
+  )
+  return {
+    count: jobsInRetentionWindow.length,
+    fetchedCount: jobs.length,
+    collectedAt,
+    cutoffDate,
+  }
 }

@@ -5,6 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import db from './db.js'
 import { ingestGupyJobs } from './services/gupy-ingest.js'
+import { getJobCutoffDate } from './services/job-retention.js'
 
 const app = express()
 const port = process.env.PORT || 8787
@@ -185,10 +186,12 @@ app.delete('/api/companies/:id', requireAdminWrite, async (req, res) => {
 })
 
 app.get('/api/vacancies', async (_req, res) => {
+  const cutoffDate = getJobCutoffDate()
   const { data, error } = await db
     .from('vacancies')
     .select('id, title, company, company_logo_url, location, modality, level, description, link, date, tags')
     .is('expired_at', null)
+    .gte('date', cutoffDate)
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
 
@@ -197,6 +200,7 @@ app.get('/api/vacancies', async (_req, res) => {
     return
   }
 
+  res.set('X-Jobs-Cutoff-Date', cutoffDate)
   res.json((data || []).map(mapVacancy))
 })
 
