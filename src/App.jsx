@@ -9,7 +9,6 @@ import { apiRequest } from './services/api'
 import {
   filterCompanies,
   filterVacancies,
-  getCompanyFilterOptions,
 } from './utils/filters'
 import './App.css'
 
@@ -29,7 +28,6 @@ function App() {
   const [companySearch, setCompanySearch] = useState('')
   const [vacancyFilters, setVacancyFilters] = useState({
     keyword: '',
-    company: '',
     modality: '',
     area: '',
     sort: 'recent',
@@ -69,11 +67,6 @@ function App() {
   const filteredCompanies = useMemo(
     () => filterCompanies(companies, companySearch),
     [companies, companySearch],
-  )
-
-  const companyFilterOptions = useMemo(
-    () => getCompanyFilterOptions(companies, vacancies),
-    [companies, vacancies],
   )
 
   const filteredVacancies = useMemo(
@@ -290,7 +283,6 @@ function App() {
           <VacanciesPage
             filters={vacancyFilters}
             onChangeFilters={updateVacancyFilters}
-            companyOptions={companyFilterOptions}
             vacancies={filteredVacancies}
             isLoading={isLoading}
           />

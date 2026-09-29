@@ -1,7 +1,7 @@
 import { areas, modalities } from '../../constants/options'
 import VacancyCard from './VacancyCard'
 
-function VacanciesPage({ filters, onChangeFilters, companyOptions, vacancies, isLoading }) {
+function VacanciesPage({ filters, onChangeFilters, vacancies, isLoading }) {
   return (
     <>
       <section className="toolbar vacancies-toolbar">
@@ -12,18 +12,6 @@ function VacanciesPage({ filters, onChangeFilters, companyOptions, vacancies, is
             value={filters.keyword}
             onChange={(event) => onChangeFilters({ keyword: event.target.value })}
           />
-
-          <select
-            value={filters.company}
-            onChange={(event) => onChangeFilters({ company: event.target.value })}
-          >
-            <option value="">Empresa</option>
-            {companyOptions.map((company) => (
-              <option key={company} value={company}>
-                {company}
-              </option>
-            ))}
-          </select>
 
           <select
             value={filters.modality}
@@ -52,6 +40,7 @@ function VacanciesPage({ filters, onChangeFilters, companyOptions, vacancies, is
           <select value={filters.sort} onChange={(event) => onChangeFilters({ sort: event.target.value })}>
             <option value="recent">Mais recentes</option>
             <option value="oldest">Mais antigas</option>
+            <option value="today">Publicadas hoje</option>
           </select>
         </div>
       </section>

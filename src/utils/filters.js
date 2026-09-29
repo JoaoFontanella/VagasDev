@@ -8,18 +8,6 @@ export const filterCompanies = (companies, query) => {
   })
 }
 
-export const getCompanyFilterOptions = (companies, vacancies) => {
-  const options = new Set()
-  companies.forEach((company) => options.add(company.name))
-  vacancies.forEach((vacancy) => {
-    if (vacancy.company) {
-      options.add(vacancy.company)
-    }
-  })
-
-  return [...options].sort((a, b) => a.localeCompare(b, 'pt-BR'))
-}
-
 const areaKeywords = {
   Tecnologia: ['tecnologia', 'software', 'desenvolvedor', 'desenvolvimento', 'programador', 'sistema', 'dados', 'cloud', 'produto digital', 'qa', 'devops', 'frontend', 'backend'],
   Marketing: ['marketing', 'comunicacao', 'publicidade', 'conteudo', 'social media', 'branding', 'seo'],
@@ -36,6 +24,32 @@ const normalizeText = (value) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+
+const getLocalDateKey = (date) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date
+  }
+
+  const parsedDate = new Date(date)
+  if (!Number.isFinite(parsedDate.getTime())) {
+    return ''
+  }
+
+  const year = parsedDate.getFullYear()
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
+  const day = String(parsedDate.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+const getTodayDateKey = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
 
 export const getVacancyArea = (vacancy) => {
   if (vacancy.area) {
@@ -58,6 +72,8 @@ export const getVacancyArea = (vacancy) => {
 export const filterVacancies = (vacancies, vacancyFilters) => {
   const normalizedKeyword = vacancyFilters.keyword.trim().toLowerCase()
   const normalizedArea = vacancyFilters.area.trim().toLowerCase()
+  const isTodayFilter = vacancyFilters.sort === 'today'
+  const todayDateKey = isTodayFilter ? getTodayDateKey() : ''
 
   const result = vacancies.filter((vacancy) => {
     const matchesKeyword =
@@ -67,19 +83,19 @@ export const filterVacancies = (vacancies, vacancyFilters) => {
       vacancy.description.toLowerCase().includes(normalizedKeyword) ||
       vacancy.tags.some((tag) => tag.toLowerCase().includes(normalizedKeyword))
 
-    const matchesCompany =
-      !vacancyFilters.company || vacancy.company === vacancyFilters.company
-
     const matchesModality =
       !vacancyFilters.modality || vacancy.modality === vacancyFilters.modality
 
     const matchesArea = !normalizedArea || normalizeText(getVacancyArea(vacancy)) === normalizedArea
+    const matchesDate =
+      !isTodayFilter ||
+      getLocalDateKey(vacancy.date) === todayDateKey
 
     return (
       matchesKeyword &&
-      matchesCompany &&
       matchesModality &&
-      matchesArea
+      matchesArea &&
+      matchesDate
     )
   })
 

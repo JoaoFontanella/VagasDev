@@ -130,7 +130,7 @@
 .toolbar-search { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .toolbar-search label { margin-left: 5px; color: var(--ink-soft); font: 0.68rem var(--font-mono); text-transform: uppercase; white-space: nowrap; }
 .toolbar-search input { min-width: 0; }
-.filters-grid { display: grid; grid-template-columns: minmax(180px, 1.8fr) repeat(4, minmax(120px, 1fr)); gap: 8px; }
+.filters-grid { display: grid; grid-template-columns: minmax(180px, 1.8fr) repeat(3, minmax(140px, 1fr)); gap: 10px; }
 input, select, textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -140,6 +140,15 @@ input, select, textarea {
   color: var(--ink);
   outline: none;
 }
+select {
+  appearance: none;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%2368736c' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-position: right 15px center;
+  background-repeat: no-repeat;
+  background-size: 12px 8px;
+}
+select:hover { border-color: var(--acid-dark); }
 input:focus, select:focus, textarea:focus { border-color: var(--acid-dark); box-shadow: 0 0 0 3px rgba(199,245,107,0.3); }
 
 .grid { display: grid; gap: 13px; }
