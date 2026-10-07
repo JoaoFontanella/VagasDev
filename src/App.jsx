@@ -12,6 +12,13 @@ import {
 } from './utils/filters'
 import './App.css'
 
+const initialVacancyFilters = {
+  keyword: '',
+  modality: '',
+  area: '',
+  sort: 'recent',
+}
+
 function App() {
   const canManage = import.meta.env.VITE_ENABLE_ADMIN === 'true'
   const adminToken = import.meta.env.VITE_ADMIN_TOKEN || ''
@@ -26,12 +33,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
 
   const [companySearch, setCompanySearch] = useState('')
-  const [vacancyFilters, setVacancyFilters] = useState({
-    keyword: '',
-    modality: '',
-    area: '',
-    sort: 'recent',
-  })
+  const [vacancyFilters, setVacancyFilters] = useState(initialVacancyFilters)
 
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false)
   const [isVacancyModalOpen, setIsVacancyModalOpen] = useState(false)
@@ -111,6 +113,10 @@ function App() {
 
   const updateVacancyFilters = (partialFilters) => {
     setVacancyFilters((current) => ({ ...current, ...partialFilters }))
+  }
+
+  const resetVacancyFilters = () => {
+    setVacancyFilters(initialVacancyFilters)
   }
 
   const saveCompany = async (event) => {
@@ -283,6 +289,7 @@ function App() {
           <VacanciesPage
             filters={vacancyFilters}
             onChangeFilters={updateVacancyFilters}
+            onResetFilters={resetVacancyFilters}
             vacancies={filteredVacancies}
             isLoading={isLoading}
           />
