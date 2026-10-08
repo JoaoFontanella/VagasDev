@@ -1,9 +1,9 @@
 function AppHeader({
-  activePage,
+  activeSource,
   canManage,
   isDarkMode,
   onToggleTheme,
-  onChangePage,
+  onChangeSource,
   onOpenCreate,
 }) {
   return (
@@ -11,31 +11,41 @@ function AppHeader({
       <div className="brand-lockup">
         <img className="brand-mark" src="/Logo.png" alt="VagasDev" />
         <div>
-          <p className="eyebrow">Radar profissional</p>
+          <p className="eyebrow">Seu radar de oportunidades</p>
           <h1>VagasDev</h1>
         </div>
       </div>
 
-      <nav className="main-nav" aria-label="Paginas principais">
+      <nav className="main-nav" aria-label="Fontes de vagas">
         <button
           type="button"
-          className={`tab ${activePage === 'vacancies' ? 'active' : ''}`}
-          onClick={() => onChangePage('vacancies')}
+          className={`tab ${activeSource === 'all' ? 'active' : ''}`}
+          aria-current={activeSource === 'all' ? 'page' : undefined}
+          onClick={() => onChangeSource('all')}
         >
-          <span className="nav-index">01</span> Vagas
+          Todas as vagas
         </button>
         <button
           type="button"
-          className={`tab ${activePage === 'sites' ? 'active' : ''}`}
-          onClick={() => onChangePage('sites')}
+          className={`tab ${activeSource === 'gupy' ? 'active' : ''}`}
+          aria-current={activeSource === 'gupy' ? 'page' : undefined}
+          onClick={() => onChangeSource('gupy')}
         >
-          <span className="nav-index">02</span> Empresas
+          Gupy
+        </button>
+        <button
+          type="button"
+          className={`tab ${activeSource === 'acic' ? 'active' : ''}`}
+          aria-current={activeSource === 'acic' ? 'page' : undefined}
+          onClick={() => onChangeSource('acic')}
+        >
+          ACIC
         </button>
       </nav>
 
       {canManage && (
         <button type="button" className="btn btn-primary" onClick={onOpenCreate}>
-          <span>+</span> {activePage === 'sites' ? 'Nova empresa' : 'Nova vaga'}
+          <span>+</span> Nova vaga
         </button>
       )}
 
@@ -50,7 +60,7 @@ function AppHeader({
         {isDarkMode ? 'Modo claro' : 'Modo escuro'}
       </button>
 
-      <p className="header-note">SC · BR<br /><span>Atualizado agora</span></p>
+      <p className="header-note"><span className="status-dot" aria-hidden="true" /> Santa Catarina · Brasil</p>
     </header>
   )
 }

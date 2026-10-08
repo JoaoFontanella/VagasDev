@@ -5,6 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import db from './db.js'
 import { ingestGupyJobs } from './services/gupy-ingest.js'
+import { ingestAcicJobs } from './services/acic-ingest.js'
 import { getJobCutoffDate } from './services/job-retention.js'
 
 const app = express()
@@ -61,6 +62,7 @@ app.use(express.json())
 
 const mapVacancy = (row) => ({
   ...row,
+  source: row.source || 'manual',
   tags: Array.isArray(row.tags) ? row.tags : [],
 })
 
@@ -187,17 +189,23 @@ app.delete('/api/companies/:id', requireAdminWrite, async (req, res) => {
 
 app.get('/api/vacancies', async (_req, res) => {
   const cutoffDate = getJobCutoffDate()
-  const { data, error } = await db
-    .from('vacancies')
-    .select('id, title, company, company_logo_url, location, modality, level, description, link, date, tags')
-    .is('expired_at', null)
-    .gte('date', cutoffDate)
-    .order('date', { ascending: false })
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    res.status(500).json({ message: 'Falha ao carregar vagas.', error: error.message })
-    return
+  const data = []
+  for (let offset = 0; ; offset += 1000) {
+    const { data: page, error } = await db
+      .from('vacancies')
+      .select('id, title, company, company_logo_url, location, modality, level, description, link, date, tags, source')
+      .is('expired_at', null)
+      .gte('date', cutoffDate)
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id')
+      .range(offset, offset + 999)
+    if (error) {
+      res.status(500).json({ message: 'Falha ao carregar vagas.', error: error.message })
+      return
+    }
+    data.push(...page)
+    if (page.length < 1000) break
   }
 
   res.set('X-Jobs-Cutoff-Date', cutoffDate)
@@ -227,6 +235,7 @@ app.post('/api/vacancies', requireAdminWrite, async (req, res) => {
     link,
     date: payload.date || new Date().toISOString().split('T')[0],
     tags: Array.isArray(payload.tags) ? payload.tags : [],
+    source: 'manual',
     created_at: new Date().toISOString(),
   }
 
@@ -261,6 +270,15 @@ app.post('/api/admin/ingest/gupy', requireAdminWrite, async (_req, res) => {
   }
 })
 
+app.post('/api/admin/ingest/acic', requireAdminWrite, async (_req, res) => {
+  try {
+    res.json(await ingestAcicJobs())
+  } catch (error) {
+    const busy = error.message === 'ACIC_ALREADY_RUNNING'
+    res.status(busy ? 409 : 502).json({ message: busy ? 'A coleta da ACIC já está em andamento.' : 'Falha na coleta da ACIC.', error: error.message })
+  }
+})
+
 const distPath = path.resolve(process.cwd(), 'dist')
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath))
@@ -272,6 +290,22 @@ if (fs.existsSync(distPath)) {
 
 app.listen(port, () => {
   console.log(`API running on http://localhost:${port}`)
+
+  if (process.env.ACIC_INGEST_ENABLED !== 'false') {
+    const configuredHours = Number(process.env.ACIC_INTERVAL_HOURS || 6)
+    const hours = Number.isFinite(configuredHours) && configuredHours > 0 ? configuredHours : 6
+    const runAcic = async () => {
+      try {
+        const result = await ingestAcicJobs()
+        console.log(`[acic] coleta concluída: ${result.count} vagas; completa: ${result.complete}.`)
+      } catch (error) {
+        console.error('[acic] coleta agendada falhou:', error.message)
+      }
+    }
+    void runAcic()
+    setInterval(() => void runAcic(), hours * 60 * 60 * 1000)
+    console.log(`[acic] agendamento habilitado a cada ${hours}h.`)
+  }
 
   if (process.env.GUPY_INGEST_ENABLED === 'true') {
     const intervalHours = Number(process.env.GUPY_INTERVAL_HOURS || 6)

@@ -1,16 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 
 :root {
-  --ink: #171b18;
-  --ink-soft: #68736c;
-  --paper: #f2f0e9;
-  --paper-deep: #e4e3da;
-  --panel: #fbfaf6;
-  --line: #d7d9d0;
-  --acid: #c7f56b;
-  --acid-dark: #617e1e;
-  --accent-ink: #171b18;
-  --sidebar: #171b18;
+  --ink: #17212f;
+  --ink-soft: #596477;
+  --paper: #f6f5f1;
+  --paper-deep: #ecece7;
+  --panel: #ffffff;
+  --line: #d9dddF;
+  --acid: #2854e8;
+  --acid-dark: #2148ce;
+  --accent-ink: #ffffff;
+  --sidebar: #ffffff;
   --coral: #ff816f;
   --font-body: 'Source Sans 3', sans-serif;
   --font-display: 'Bricolage Grotesque', sans-serif;
@@ -18,17 +18,17 @@
 }
 
 :root[data-theme='dark'] {
-  --ink: #edf2e8;
-  --ink-soft: #a8b1a5;
-  --paper: #171d19;
-  --paper-deep: #242d27;
-  --panel: #202822;
-  --line: #3a473d;
-  --acid: #c7f56b;
-  --acid-dark: #b9e65f;
+  --ink: #edf1fa;
+  --ink-soft: #a9b5ca;
+  --paper: #111722;
+  --paper-deep: #222c3d;
+  --panel: #192232;
+  --line: #354157;
+  --acid: #9cb6ff;
+  --acid-dark: #9cb6ff;
   --coral: #ff8f7e;
-  --accent-ink: #171b18;
-  --sidebar: #0d120f;
+  --accent-ink: #111722;
+  --sidebar: #192232;
 }
 
 * { box-sizing: border-box; }
@@ -36,9 +36,7 @@
 body {
   margin: 0;
   min-height: 100svh;
-  background:
-    radial-gradient(circle at 75% 8%, rgba(199, 245, 107, 0.22), transparent 26rem),
-    linear-gradient(135deg, #dfe2d8 0%, var(--paper) 45%, #e8e7df 100%);
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   line-height: 1.45;
@@ -47,9 +45,7 @@ body {
 }
 
 :root[data-theme='dark'] body {
-  background:
-    radial-gradient(circle at 75% 8%, rgba(199, 245, 107, 0.12), transparent 26rem),
-    linear-gradient(135deg, #111611 0%, #171d19 48%, #202820 100%);
+  background: var(--paper);
 }
 
 #root { min-height: 100svh; }

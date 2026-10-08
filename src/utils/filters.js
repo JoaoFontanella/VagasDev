@@ -1,3 +1,7 @@
+import { getVacancyArea, normalizeAreaText } from './vacancy-areas.js'
+export { getVacancyArea } from './vacancy-areas.js'
+import { getTodayDateKey, getVacancyDateKey } from './vacancy-dates.js'
+
 export const filterCompanies = (companies, query) => {
   const normalizedSearch = query.trim().toLowerCase()
 
@@ -8,72 +12,11 @@ export const filterCompanies = (companies, query) => {
   })
 }
 
-const areaKeywords = {
-  Tecnologia: ['tecnologia', 'software', 'desenvolvedor', 'desenvolvimento', 'programador', 'sistema', 'dados', 'cloud', 'produto digital', 'qa', 'devops', 'frontend', 'backend'],
-  Marketing: ['marketing', 'comunicacao', 'publicidade', 'conteudo', 'social media', 'branding', 'seo'],
-  Vendas: ['vendas', 'comercial', 'business development', 'account executive', 'sales', 'representante'],
-  Administrativo: ['administrativo', 'administracao', 'secretaria', 'assistente', 'recepcionista', 'office'],
-  Financeiro: ['financeiro', 'financas', 'contabil', 'contabilidade', 'controladoria', 'fiscal', 'tesouraria'],
-  'Recursos Humanos': ['recursos humanos', 'rh', 'people', 'recrutamento', 'selecao', 'talentos', 'dp'],
-  Operacoes: ['operacoes', 'logistica', 'compras', 'suprimentos', 'estoque', 'atendimento', 'producao'],
-  Engenharia: ['engenharia', 'engenheiro', 'civil', 'mecanica', 'eletrica', 'processos'],
-}
-
-const normalizeText = (value) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-
-const getLocalDateKey = (date) => {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return date
-  }
-
-  const parsedDate = new Date(date)
-  if (!Number.isFinite(parsedDate.getTime())) {
-    return ''
-  }
-
-  const year = parsedDate.getFullYear()
-  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
-  const day = String(parsedDate.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-const getTodayDateKey = () => {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-export const getVacancyArea = (vacancy) => {
-  if (vacancy.area) {
-    return vacancy.area
-  }
-
-  const text = normalizeText([
-    vacancy.title,
-    vacancy.description,
-    ...(Array.isArray(vacancy.tags) ? vacancy.tags : []),
-  ]
-    .filter(Boolean)
-    .join(' '))
-
-  return Object.entries(areaKeywords).find(([, keywords]) =>
-    keywords.some((keyword) => text.includes(keyword)),
-  )?.[0] || ''
-}
-
-export const filterVacancies = (vacancies, vacancyFilters) => {
+export const filterVacancies = (vacancies, vacancyFilters, now = new Date()) => {
   const normalizedKeyword = vacancyFilters.keyword.trim().toLowerCase()
-  const normalizedArea = vacancyFilters.area.trim().toLowerCase()
+  const normalizedArea = normalizeAreaText(vacancyFilters.area)
   const isTodayFilter = vacancyFilters.sort === 'today'
-  const todayDateKey = isTodayFilter ? getTodayDateKey() : ''
+  const todayDateKey = isTodayFilter ? getTodayDateKey(now) : ''
 
   const result = vacancies.filter((vacancy) => {
     const matchesKeyword =
@@ -86,10 +29,10 @@ export const filterVacancies = (vacancies, vacancyFilters) => {
     const matchesModality =
       !vacancyFilters.modality || vacancy.modality === vacancyFilters.modality
 
-    const matchesArea = !normalizedArea || normalizeText(getVacancyArea(vacancy)) === normalizedArea
+    const matchesArea = !normalizedArea || normalizeAreaText(getVacancyArea(vacancy)) === normalizedArea
     const matchesDate =
       !isTodayFilter ||
-      getLocalDateKey(vacancy.date) === todayDateKey
+      getVacancyDateKey(vacancy) === todayDateKey
 
     return (
       matchesKeyword &&

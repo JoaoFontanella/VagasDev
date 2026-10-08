@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import AppHeader from './components/layout/AppHeader'
-import CompanyModal from './components/modals/CompanyModal'
 import VacancyModal from './components/modals/VacancyModal'
-import SitesPage from './components/sites/SitesPage'
 import VacanciesPage from './components/vacancies/VacanciesPage'
-import { createInitialVacancyForm, initialCompanyForm } from './constants/forms'
+import { createInitialVacancyForm } from './constants/forms'
 import { apiRequest } from './services/api'
-import {
-  filterCompanies,
-  filterVacancies,
-} from './utils/filters'
+import { filterVacancies } from './utils/filters'
+import { getAreaCounts } from './utils/vacancy-areas'
+import { getVacancyCounts } from './utils/vacancy-dates'
 import './App.css'
 
 const initialVacancyFilters = {
@@ -19,27 +16,35 @@ const initialVacancyFilters = {
   sort: 'recent',
 }
 
+const sourceTitles = {
+  all: 'Seu próximo capítulo começa aqui.',
+  gupy: 'Um novo caminho. Uma vaga na Gupy.',
+  acic: 'Grandes oportunidades. Perto de você.',
+}
+
+const sourceDescriptions = {
+  all: 'Pesquise, compare e encontre seu próximo movimento profissional.',
+  gupy: 'Explore vagas publicadas na Gupy e encontre oportunidades para seu próximo passo profissional.',
+  acic: 'Encontre oportunidades em Criciúma na Rede de Talentos da ACIC e candidate-se pelo anúncio oficial.',
+}
+
 function App() {
   const canManage = import.meta.env.VITE_ENABLE_ADMIN === 'true'
   const adminToken = import.meta.env.VITE_ADMIN_TOKEN || ''
 
-  const [activePage, setActivePage] = useState('vacancies')
+  const [activeSource, setActiveSource] = useState('all')
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = window.localStorage.getItem('vagasdev-theme')
     return savedTheme === 'dark'
   })
-  const [companies, setCompanies] = useState([])
   const [vacancies, setVacancies] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const [companySearch, setCompanySearch] = useState('')
   const [vacancyFilters, setVacancyFilters] = useState(initialVacancyFilters)
+  const [vacancyPage, setVacancyPage] = useState(1)
 
-  const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false)
   const [isVacancyModalOpen, setIsVacancyModalOpen] = useState(false)
 
-  const [editingCompanyId, setEditingCompanyId] = useState(null)
-  const [companyForm, setCompanyForm] = useState(initialCompanyForm)
   const [vacancyForm, setVacancyForm] = useState(createInitialVacancyForm)
 
   useEffect(() => {
@@ -50,12 +55,7 @@ function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [companiesData, vacanciesData] = await Promise.all([
-          apiRequest('/api/companies'),
-          apiRequest('/api/vacancies'),
-        ])
-        setCompanies(companiesData)
-        setVacancies(vacanciesData)
+        setVacancies(await apiRequest('/api/vacancies'))
       } catch (error) {
         window.alert(error.message)
       } finally {
@@ -66,46 +66,29 @@ function App() {
     loadData()
   }, [])
 
-  const filteredCompanies = useMemo(
-    () => filterCompanies(companies, companySearch),
-    [companies, companySearch],
+  const sourceVacancies = useMemo(
+    () => activeSource === 'all'
+      ? vacancies
+      : vacancies.filter((vacancy) => vacancy.source === activeSource),
+    [activeSource, vacancies],
   )
+
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(interval)
+  }, [])
 
   const filteredVacancies = useMemo(
-    () => filterVacancies(vacancies, vacancyFilters),
-    [vacancies, vacancyFilters],
+    () => filterVacancies(sourceVacancies, vacancyFilters, now),
+    [sourceVacancies, vacancyFilters, now],
   )
-
-  const activeCount = vacancies.length
-  const [now] = useState(() => Date.now())
-  const recentCount = useMemo(() => {
-    return vacancies.filter((vacancy) => {
-      const date = new Date(vacancy.date).getTime()
-      return Number.isFinite(date) && now - date <= 7 * 24 * 60 * 60 * 1000
-    }).length
-  }, [now, vacancies])
-
-  const openAddCompanyModal = () => {
-    setEditingCompanyId(null)
-    setCompanyForm(initialCompanyForm)
-    setIsCompanyModalOpen(true)
-  }
-
-  const openEditCompanyModal = (company) => {
-    setEditingCompanyId(company.id)
-    setCompanyForm({
-      name: company.name,
-      site: company.site,
-      careers: company.careers,
-      linkedin: company.linkedin,
-      notes: company.notes,
-    })
-    setIsCompanyModalOpen(true)
-  }
-
-  const updateCompanyForm = (partialForm) => {
-    setCompanyForm((current) => ({ ...current, ...partialForm }))
-  }
+  const areaCandidates = useMemo(
+    () => filterVacancies(sourceVacancies, { ...vacancyFilters, area: '' }, now),
+    [sourceVacancies, vacancyFilters, now],
+  )
+  const areaCounts = useMemo(() => getAreaCounts(areaCandidates), [areaCandidates])
+  const counts = useMemo(() => getVacancyCounts(sourceVacancies, now), [sourceVacancies, now])
 
   const updateVacancyForm = (partialForm) => {
     setVacancyForm((current) => ({ ...current, ...partialForm }))
@@ -113,84 +96,12 @@ function App() {
 
   const updateVacancyFilters = (partialFilters) => {
     setVacancyFilters((current) => ({ ...current, ...partialFilters }))
+    setVacancyPage(1)
   }
 
   const resetVacancyFilters = () => {
     setVacancyFilters(initialVacancyFilters)
-  }
-
-  const saveCompany = async (event) => {
-    event.preventDefault()
-
-    if (!canManage) {
-      window.alert('Modo publico: cadastro desabilitado.')
-      return
-    }
-
-    const payload = {
-      ...companyForm,
-      name: companyForm.name.trim(),
-      site: companyForm.site.trim(),
-      careers: companyForm.careers.trim(),
-      linkedin: companyForm.linkedin.trim(),
-      notes: companyForm.notes.trim(),
-    }
-
-    if (!payload.name) {
-      return
-    }
-
-    try {
-      if (editingCompanyId) {
-        const updatedCompany = await apiRequest(`/api/companies/${editingCompanyId}`, {
-          method: 'PUT',
-          headers: { 'x-admin-token': adminToken },
-          body: JSON.stringify(payload),
-        })
-
-        setCompanies((current) =>
-          current.map((company) =>
-            company.id === editingCompanyId ? updatedCompany : company,
-          ),
-        )
-      } else {
-        const createdCompany = await apiRequest('/api/companies', {
-          method: 'POST',
-          headers: { 'x-admin-token': adminToken },
-          body: JSON.stringify(payload),
-        })
-
-        setCompanies((current) => [createdCompany, ...current])
-      }
-
-      setIsCompanyModalOpen(false)
-      setEditingCompanyId(null)
-      setCompanyForm(initialCompanyForm)
-    } catch (error) {
-      window.alert(error.message)
-    }
-  }
-
-  const deleteCompany = async (companyId) => {
-    if (!canManage) {
-      window.alert('Modo publico: exclusao desabilitada.')
-      return
-    }
-
-    const shouldDelete = window.confirm('Tem certeza que deseja excluir esta empresa?')
-    if (!shouldDelete) {
-      return
-    }
-
-    try {
-      await apiRequest(`/api/companies/${companyId}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-token': adminToken },
-      })
-      setCompanies((current) => current.filter((company) => company.id !== companyId))
-    } catch (error) {
-      window.alert(error.message)
-    }
+    setVacancyPage(1)
   }
 
   const saveVacancy = async (event) => {
@@ -239,74 +150,75 @@ function App() {
   return (
     <div className="app-shell">
       <AppHeader
-        activePage={activePage}
+        activeSource={activeSource}
         canManage={canManage}
         isDarkMode={isDarkMode}
         onToggleTheme={() => setIsDarkMode((current) => !current)}
-        onChangePage={setActivePage}
-        onOpenCreate={
-          activePage === 'sites'
-            ? openAddCompanyModal
-            : () => setIsVacancyModalOpen(true)
-        }
+        onChangeSource={(source) => {
+          setActiveSource(source)
+          setVacancyFilters(initialVacancyFilters)
+          setVacancyPage(1)
+        }}
+        onOpenCreate={() => setIsVacancyModalOpen(true)}
       />
 
+      <a className="skip-link" href="#oportunidades">Pular para as vagas</a>
       <main className="workspace">
         <section className="workspace-head">
-          <div>
-            <p className="section-kicker">{activePage === 'sites' ? 'Radar de empresas' : 'Curadoria de oportunidades'}</p>
-            <h2>{activePage === 'sites' ? 'Onde a próxima oportunidade começa.' : 'Vagas que merecem sua atenção.'}</h2>
+          <div className="hero-copy">
+            <p className="section-kicker"><span className="kicker-rule" /> CONEXÕES LOCAIS. NOVAS POSSIBILIDADES.</p>
+            <h2>{sourceTitles[activeSource]}</h2>
             <p className="workspace-lede">
-              {activePage === 'sites'
-                ? 'Uma visão limpa das empresas que estão movimentando a cena tech da região.'
-                : 'Pesquise, compare e encontre seu próximo movimento profissional.'}
+              {sourceDescriptions[activeSource]}
             </p>
+            <a className="hero-action" href="#oportunidades">Encontre sua oportunidade <span aria-hidden="true">↗</span></a>
           </div>
-          <div className="workspace-stats" aria-label="Resumo">
-            <div>
-              <strong>{activePage === 'sites' ? companies.length : activeCount}</strong>
-              <span>{activePage === 'sites' ? 'empresas mapeadas' : 'vagas abertas'}</span>
-            </div>
-            <div className="stat-accent">
-              <strong>{recentCount}</strong>
-              <span>publicadas em 7 dias</span>
-            </div>
+          <div className="hero-art" aria-hidden="true">
+            <div className="orbit orbit-one" /><div className="orbit orbit-two" />
+            <div className="art-axis" />
+            <span className="art-label">UM NOVO<br />HORIZONTE.</span>
+            <span className="art-arrow">↗</span>
+            <span className="art-coordinate">28°40′ S / 49°22′ O · CRICIÚMA</span>
           </div>
         </section>
+          <div className="workspace-stats" aria-label="Resumo">
+            <div>
+              <strong>{isLoading ? '—' : counts.active}</strong>
+              <span>vagas abertas</span>
+            </div>
+            <div className="stat-accent">
+              <strong>{isLoading ? '—' : counts.recent}</strong>
+              <span>publicadas em 7 dias</span>
+            </div>
+            <button
+              type="button"
+              className={`stat-today ${vacancyFilters.sort === 'today' ? 'is-selected' : ''}`}
+              aria-pressed={vacancyFilters.sort === 'today'}
+              aria-label={`Filtrar ${counts.today} vagas publicadas hoje`}
+              onClick={() => updateVacancyFilters({ sort: vacancyFilters.sort === 'today' ? 'recent' : 'today' })}
+            >
+              <strong>{isLoading ? '—' : counts.today}</strong>
+              <span>publicadas hoje</span>
+            </button>
+          </div>
 
-        <section className="content">
-        {activePage === 'sites' ? (
-          <SitesPage
-            companySearch={companySearch}
-            onCompanySearchChange={setCompanySearch}
-            companies={filteredCompanies}
-            isLoading={isLoading}
-            canManage={canManage}
-            onEditCompany={openEditCompanyModal}
-            onDeleteCompany={deleteCompany}
-          />
-        ) : (
+        <section className="content" id="oportunidades" aria-label="Explorar oportunidades">
           <VacanciesPage
+            key={activeSource}
+            page={vacancyPage}
+            onChangePage={setVacancyPage}
+            areaCounts={areaCounts}
+            areaTotal={areaCandidates.length}
+            sourceLabel={activeSource === 'all' ? 'todas as fontes' : activeSource === 'gupy' ? 'Gupy' : 'ACIC'}
             filters={vacancyFilters}
             onChangeFilters={updateVacancyFilters}
             onResetFilters={resetVacancyFilters}
             vacancies={filteredVacancies}
             isLoading={isLoading}
           />
-        )}
         </section>
+        <footer className="workspace-footer"><strong>VagasDev<span>.</span></strong><p>Seu próximo passo, mais perto.</p><span>Gupy + ACIC · Candidatura no site oficial</span></footer>
       </main>
-
-      {canManage && (
-        <CompanyModal
-          isOpen={isCompanyModalOpen}
-          editingCompanyId={editingCompanyId}
-          form={companyForm}
-          onChangeForm={updateCompanyForm}
-          onClose={() => setIsCompanyModalOpen(false)}
-          onSubmit={saveCompany}
-        />
-      )}
 
       {canManage && (
         <VacancyModal

@@ -11,10 +11,13 @@
     "ingest:gupy": "node scripts/ingest-gupy.js",
     "start": "node server/index.js",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "ingest:acic": "node scripts/ingest-acic.js",
+    "test": "node --test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
+    "cheerio": "^1.2.0",
     "concurrently": "^10.0.5",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
