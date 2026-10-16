@@ -38,3 +38,16 @@ export const formatVacancyDate = (vacancy) => {
   const day = getVacancyDateKey(vacancy)
   return day ? day.split('-').reverse().join('/') : 'Data não informada'
 }
+
+// Compare calendar days against the same day of the previous month, clamping
+// month ends (March 31 -> February 28/29). Exactly one month is not yet old.
+export const isVacancyOld = (vacancy, now = new Date()) => {
+  const publication = getVacancyDateKey(vacancy)
+  if (!publication || !Number.isFinite(now.getTime())) return false
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const lastDay = new Date(year, month, 0).getDate()
+  const cutoff = new Date(year, month - 1, Math.min(now.getDate(), lastDay))
+  const key = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, '0')}-${String(cutoff.getDate()).padStart(2, '0')}`
+  return publication < key
+}

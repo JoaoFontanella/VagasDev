@@ -217,7 +217,12 @@ function App() {
             isLoading={isLoading}
           />
         </section>
-        <footer className="workspace-footer"><strong>VagasDev<span>.</span></strong><p>Seu próximo passo, mais perto.</p><span>Gupy + ACIC · Candidatura no site oficial</span></footer>
+        <footer className="workspace-footer">
+          <strong>VagasDev<span>.</span></strong>
+          <p>Seu próximo passo, mais perto.</p>
+          <span>Gupy + ACIC · Candidatura no site oficial</span>
+          <small className="footer-copyright">© 2026 João Fontanella. Todos os direitos reservados.</small>
+        </footer>
       </main>
 
       {canManage && (

@@ -376,7 +376,7 @@ input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px color-mix(in s
 .empty-state p { max-width: 430px; margin: 0 auto 20px; }
 .empty-symbol { display: inline-block; font-size: 2.5rem; color: var(--acid-dark); }
 .is-loading { animation: radar-spin 2s linear infinite; }
-.workspace-footer { display: flex; align-items: center; gap: 20px; padding: 30px 0; margin-top: 50px; border-top: 1px solid var(--line); color: var(--ink-soft); }
+.workspace-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 30px 0; margin-top: 50px; border-top: 1px solid var(--line); color: var(--ink-soft); }
 .workspace-footer strong { color: var(--ink); font: 800 1.25rem var(--font-display); letter-spacing: -0.06em; }
 .workspace-footer strong span { color: var(--acid-dark); }
 .workspace-footer p { margin: 0; font-size: 0.8rem; }
@@ -439,3 +439,19 @@ input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px color-mix(in s
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+.workspace-footer .footer-copyright { flex-basis: 100%; color: var(--ink-soft); font-size: 0.7rem; line-height: 1.5; }
+
+/* Age is distinct from the seven-day recent indicator. */
+.vacancy-card-standard { --date-accent: var(--line); }
+.vacancy-card-old {
+  --date-accent: #a86627;
+  background: #fff5e8;
+  border-color: #dfbe94;
+}
+.vacancy-card-old:hover { border-color: #a86627; }
+.vacancy-card-old .date-badge { color: #87501d; }
+.vacancy-card-old .date-badge::before { content: 'ANTIGA · '; }
+:root[data-theme='dark'] .vacancy-card-old { background: #30271f; border-color: #735333; }
+:root[data-theme='dark'] .vacancy-card-old:hover { border-color: #dca76b; }
+:root[data-theme='dark'] .vacancy-card-old .date-badge { color: #f0bd80; }

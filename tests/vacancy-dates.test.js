@@ -1,3 +1,4 @@
+import { isVacancyOld } from '../src/utils/vacancy-dates.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { getTodayDateKey, getVacancyDateKey, getVacancyCounts, formatVacancyDate } from '../src/utils/vacancy-dates.js'
@@ -40,4 +41,20 @@ test('card displays the same calendar day used by the ACIC today filter', () => 
   assert.equal(formatVacancyDate(jobs[1]), '07/10/2026')
   assert.equal(formatVacancyDate(jobs[4]), '06/10/2026')
   assert.equal(formatVacancyDate(job(9, 'acic', 'invalid')), 'Data não informada')
+})
+
+test('old means strictly more than one calendar month from the client day', () => {
+  const clientNow = new Date(2026, 9, 15, 10)
+  assert.equal(isVacancyOld(job(1, 'acic', '2026-09-14'), clientNow), true)
+  assert.equal(isVacancyOld(job(2, 'acic', '2026-09-15'), clientNow), false)
+  assert.equal(isVacancyOld(job(3, 'acic', '2026-09-20'), clientNow), false)
+  assert.equal(isVacancyOld(job(4, 'acic', '2026-10-16'), clientNow), false)
+  assert.equal(isVacancyOld(job(5, 'acic', 'invalid'), clientNow), false)
+})
+test('month boundary handles February, leap years and January', () => {
+  assert.equal(isVacancyOld(job(1, 'acic', '2026-02-28'), new Date(2026, 2, 31)), false)
+  assert.equal(isVacancyOld(job(2, 'acic', '2026-02-27'), new Date(2026, 2, 31)), true)
+  assert.equal(isVacancyOld(job(3, 'acic', '2024-02-29'), new Date(2024, 2, 31)), false)
+  assert.equal(isVacancyOld(job(4, 'acic', '2024-02-28'), new Date(2024, 2, 31)), true)
+  assert.equal(isVacancyOld(job(5, 'acic', '2025-12-14'), new Date(2026, 0, 15)), true)
 })

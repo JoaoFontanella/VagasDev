@@ -1,13 +1,15 @@
-import { formatVacancyDate, getVacancyCounts } from '../../utils/vacancy-dates'
+import { formatVacancyDate, getVacancyCounts, isVacancyOld } from '../../utils/vacancy-dates'
 
 function VacancyCard({ vacancy }) {
   const companyName = (vacancy.company || '').trim()
   const hasCompany = Boolean(companyName) && !/^empresa n[aã]o informada(?:\s*\([^)]*\))?$/i.test(companyName)
   const isRecent = getVacancyCounts([vacancy]).recent === 1
-  const dateClassName = isRecent ? 'date-badge date-badge-recent' : 'date-badge date-badge-old'
+  const isOld = isVacancyOld(vacancy)
+  const ageClass = isOld ? 'old' : isRecent ? 'recent' : 'standard'
+  const dateClassName = `date-badge date-badge-${ageClass}`
 
   return (
-    <article className={`card vacancy-card ${isRecent ? 'vacancy-card-recent' : 'vacancy-card-old'}`}>
+    <article className={`card vacancy-card ${`vacancy-card-${ageClass}`}`}>
       <div className="vacancy-topline"><span className="vacancy-source">{vacancy.source === 'gupy' ? 'GUPY' : vacancy.source === 'acic' ? 'ACIC' : 'OPORTUNIDADE'}</span><span className={dateClassName}>{formatVacancyDate(vacancy)}</span></div>
       <div className="vacancy-heading">
         {hasCompany && <div className="vacancy-company-logo">
